@@ -4,9 +4,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
 import mysql.connector
-import time
 
-# Conectar ao banco de dados
+
 con = mysql.connector.connect(
     host='localhost',
     database='saferide',
@@ -52,9 +51,13 @@ for i in range(1, 749):
         nome_escola = escola.find('h4', class_='titulo_res').text.split(': ')[1]
         cep_escola = escola.find('p', class_='assunto_esc').text.split('CEP: ')[1].split('ZONA: ')[0].replace('     - ', '').strip()
 
-        endereco(cep_escola)
-        print(f"CEP: {cep_escola}")
         id_endereco = select_endereco(cep_escola)
+
+        if id_endereco is None:
+            endereco(cep_escola)
+            id_endereco = select_endereco(cep_escola)
+
+        print(f"CEP: {cep_escola}")
 
         if id_endereco:
             print(f"ID Endereço: {id_endereco}")
