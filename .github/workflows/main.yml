@@ -1,0 +1,52 @@
+name: Send Email on Commit
+
+on:
+  push:
+
+jobs:
+  send-email:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Send email notification via SendGrid using curl
+        env:
+          SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }} 
+          COMMIT_AUTHOR_EMAIL: ${{ github.event.head_commit.author.email }}
+          COMMIT_AUTHOR_NAME: ${{ github.event.head_commit.author.name }}
+
+        run: |
+          # Corpo do e-mail em formato JSON
+          EMAIL_PAYLOAD=$(cat <<EOF
+          {
+            "personalizations": [
+              {
+                "to": [
+                  {
+                    "email": "$COMMIT_AUTHOR_EMAIL"
+                  }
+                ],
+                "subject": "⚠️ Lembrete de Relatório de produtividade ⚠️"
+              }
+            ],
+            "from": {
+              "email": "safe20.ride24@gmail.com"
+            },
+            "content": [
+              {
+                "type": "text/plain",
+                "value": "Olá, $COMMIT_AUTHOR_NAME.\n\nVocê acabou de fazer um commit no repositório.\nNão se esqueça de fazer o relatório de produtividade para não ter problemas com apontamentos e acumular faltas em PI.\n\n🚨 Atenção 🚨"
+              }
+            ]
+          }
+          EOF
+          )
+
+          # Comando curl para enviar o e-mail usando a API do SendGrid
+          curl --request POST \
+            --url https://api.sendgrid.com/v3/mail/send \
+            --header "Authorization: Bearer $SENDGRID_API_KEY" \
+            --header 'Content-Type: application/json' \
+            --data "$EMAIL_PAYLOAD"
