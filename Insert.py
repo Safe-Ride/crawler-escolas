@@ -6,6 +6,9 @@ import mysql.connector
 import csv
 import os  
 from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 
 con = mysql.connector.connect(
@@ -40,8 +43,15 @@ def select_endereco(cep: str):
     cursor.close()
     return resultado[0] if resultado else None
 
-os.remove("enderecos.csv")
-os.remove("escolas.csv")
+try:
+    os.remove("enderecos.csv")
+except:
+    pass
+
+try:
+    os.remove("escolas.csv")
+except:
+    pass
 chrome_options = Options()
 chrome_options.add_argument("--headless") 
 driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
@@ -58,6 +68,11 @@ cabecalho_enderecos = ["cep", "usuario_id"]
 for i in range(1, 749):
     url = f'https://pesquisaseduc.fde.sp.gov.br/localize_escola?pageNumber={i}&idMunicipio=100&inicial=False'
     driver.get(url)
+    try:
+        WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, '#conteudo > div > article:nth-child(5)')))
+    except Exception as e:
+        print(f"Erro: {e}")
+        break
     page_content = driver.page_source
     soup = BeautifulSoup(page_content, 'html.parser')
     escolas = soup.find_all('article')[2:]
@@ -71,7 +86,7 @@ for i in range(1, 749):
         if id_endereco is None:
             endereco(cep_escola)
             id_endereco = select_endereco(cep_escola)
-
+        print(f"Página: {i}")
         print(f"CEP: {cep_escola}")
 
 
@@ -117,6 +132,6 @@ if dados_enderecos_csv:
         writer = csv.writer(file, delimiter=';', quotechar='"', quoting=csv.QUOTE_ALL)
         writer.writerows(dados_enderecos_csv)
 
-# Finaliza o driver e a conexão com o banco de dados
+
 driver.quit()
 con.close()
