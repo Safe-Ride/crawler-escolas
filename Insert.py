@@ -78,7 +78,8 @@ for i in range(1, 749):
     escolas = soup.find_all('article')[2:]
 
     for escola in escolas:
-        nome_escola = escola.find('h4', class_='titulo_res').text.split(': ')[1]
+        nome_escola = escola.find('h4', class_='titulo_res').text.split(': ')[1].rstrip()
+        nome_escola = ' '.join(nome_escola.split())
         cep_escola = escola.find('p', class_='assunto_esc').text.split('CEP: ')[1].split('ZONA: ')[0].replace('     - ', '').strip()
 
         id_endereco = select_endereco(cep_escola)
